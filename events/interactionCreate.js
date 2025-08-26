@@ -1,7 +1,7 @@
 // events/interactionCreate.js
 // voting system for jury
 const { Events, EmbedBuilder, MessageFlags } = require("discord.js");
-const { concludeTrial } = require("../commands/report"); // import helper
+const { concludeTrial, updateTrialEmbed } = require("../commands/report");
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -40,21 +40,11 @@ module.exports = {
 
     // Acknowledge + show live tally
     await interaction.reply({
-      content: `Vote recorded: **${choice === "guilty" ? "Guilty" : "Not Guilty"}**.\nCurrent tally — Guilty: **${trial.counts.guilty}**, Not Guilty: **${trial.counts.notguilty}**.`,
+      content: `Vote recorded: **${choice === "guilty" ? "Guilty" : "Not Guilty"}**.`,
       flags: MessageFlags.Ephemeral,
     });
 
-    // (Optional) live-update the original embed footer with a mini tally
-    try {
-      const guild = await client.guilds.fetch(trial.guildId);
-      const channel = await guild.channels.fetch(trial.channelId);
-      const msg = await channel.messages.fetch(trial.messageId);
-      const embed = EmbedBuilder.from(msg.embeds[0]);
-      embed.setFooter({
-        text: `Under review • Guilty: ${trial.counts.guilty} | Not Guilty: ${trial.counts.notguilty} • Ends soon`,
-      });
-      await msg.edit({ embeds: [embed] });
-    } catch (_) {}
+    await updateTrialEmbed(interaction.client, reportId);
 
     // Early auto-conclude if a decisive threshold is reached (e.g., first to 5)
     if (trial.counts.guilty >= 5 || trial.counts.notguilty >= 5) {
