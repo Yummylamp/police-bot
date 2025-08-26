@@ -249,25 +249,21 @@ async function ensureJailRole(guild) {
   if (!jailRole) {
     jailRole = await guild.roles.create({
       name: JAIL_ROLE_NAME,
-      color: 0x6b7280,      // distinct grey
-      hoist: true,          // display separately in member list
+      color: 0x6b7280,
+      hoist: true,              // show as its own section
       mentionable: false,
-      permissions: [],      // keep empty; don't grant perms accidentally
+      permissions: [],
       reason: "YummyPolice jail role",
     });
-  } else {
-    // make sure it's hoisted + colored
-    if (!jailRole.hoist || jailRole.color === 0) {
-      await jailRole.edit({ hoist: true, color: 0x6b7280 }).catch(() => {});
-    }
+  } else if (!jailRole.hoist || jailRole.color === 0) {
+    await jailRole.edit({ hoist: true, color: 0x6b7280 }).catch(() => {});
   }
 
-  // Put Jail just under the bot’s top role (as high as we’re allowed)
-  const botTop = guild.members.me.roles.highest;
-  const targetPos = Math.max(botTop.position - 1, 1);
+  // Move Jail as high as the bot is allowed
+  const me = guild.members.me;
+  const targetPos = Math.max(me.roles.highest.position - 1, 1);
   if (jailRole.position !== targetPos) {
     await jailRole.setPosition(targetPos).catch(() => {});
   }
-
   return jailRole;
 }
